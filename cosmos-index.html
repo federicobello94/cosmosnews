@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cosmos News</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #020408;
+    --surface: #080d14;
+    --surface2: #0d1520;
+    --border: rgba(0, 200, 255, 0.12);
+    --accent: #00c8ff;
+    --accent2: #7b2fff;
+    --text: #e8f4f8;
+    --muted: #5a7a8a;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  #stars {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden;
+  }
+  .star {
+    position: absolute; background: white; border-radius: 50%;
+    animation: twinkle var(--d) ease-in-out infinite;
+  }
+  @keyframes twinkle {
+    0%,100% { opacity: var(--o); } 50% { opacity: 1; }
+  }
+  body::before {
+    content: ''; position: fixed; top: -20%; right: -10%; width: 60vw; height: 60vw;
+    background: radial-gradient(ellipse, rgba(123,47,255,0.07) 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+
+  /* HEADER */
+  header {
+    position: relative; z-index: 10;
+    padding: 18px 32px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(2,4,8,0.95);
+    display: flex; align-items: center; gap: 16px;
+    backdrop-filter: blur(10px);
+  }
+  .logo-text {
+    font-family: 'Orbitron', monospace; font-size: 1.4rem; font-weight: 900;
+    letter-spacing: 0.12em;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .logo-sub { font-size: 0.55rem; letter-spacing: 0.3em; color: var(--muted); text-transform: uppercase; margin-top: 1px; }
+  .header-right { margin-left: auto; display: flex; align-items: center; gap: 16px; }
+  .live-dot {
+    width: 6px; height: 6px; border-radius: 50%; background: #00ff88;
+    box-shadow: 0 0 8px #00ff88; animation: pulse 2s ease-in-out infinite;
+    display: inline-block; margin-right: 6px;
+  }
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+  .live-label { font-size: 0.6rem; letter-spacing: 0.2em; color: var(--muted); text-transform: uppercase; }
+  #clock { font-family: 'Orbitron', monospace; font-size: 0.75rem; color: var(--accent); letter-spacing: 0.1em; }
+  .refresh-btn {
+    background: none; border: 1px solid var(--border); color: var(--muted);
+    font-family: 'Orbitron', monospace; font-size: 0.55rem; letter-spacing: 0.2em;
+    padding: 6px 14px; cursor: pointer; border-radius: 2px; transition: all 0.2s; text-transform: uppercase;
+  }
+  .refresh-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* NAV */
+  nav {
+    position: relative; z-index: 10;
+    padding: 0 32px;
+    background: rgba(2,4,8,0.85);
+    border-bottom: 1px solid var(--border);
+    display: flex; gap: 0; overflow-x: auto; scrollbar-width: none;
+  }
+  nav::-webkit-scrollbar { display: none; }
+  .tab {
+    padding: 12px 20px; font-family: 'Orbitron', monospace; font-size: 0.6rem;
+    font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--muted); cursor: pointer; border: none; background: none;
+    border-bottom: 2px solid transparent; transition: all 0.2s; white-space: nowrap;
+    display: flex; align-items: center; gap: 7px;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* MAIN */
+  main { position: relative; z-index: 5; max-width: 1500px; margin: 0 auto; padding: 24px 32px 60px; }
+
+  /* GRID - più notizie, più compatto */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+  }
+  /* prima card occupa 2 colonne, più grande */
+  .grid .card:first-child { grid-column: 1 / 3; }
+
+  /* CARD */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+    animation: fadeUp 0.35s ease both;
+    display: flex; flex-direction: column;
+  }
+  .card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(0,200,255,0.3);
+    box-shadow: 0 0 24px rgba(0,200,255,0.08);
+  }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+
+  .card-img-wrap {
+    position: relative; aspect-ratio: 16/9;
+    overflow: hidden; background: var(--surface2); flex-shrink: 0;
+  }
+  .grid .card:first-child .card-img-wrap { aspect-ratio: 16/7; }
+
+  .card-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s; }
+  .card:hover .card-img { transform: scale(1.04); }
+  .card-placeholder {
+    width: 100%; height: 100%; display: flex; align-items: center;
+    justify-content: center; font-size: 2.2rem;
+    background: linear-gradient(135deg, var(--surface2), var(--bg));
+  }
+  .card-badge {
+    position: absolute; top: 8px; left: 8px;
+    background: rgba(0,0,0,0.75); border: 1px solid var(--border);
+    color: var(--accent); font-family: 'Orbitron', monospace;
+    font-size: 0.5rem; font-weight: 700; letter-spacing: 0.2em;
+    padding: 2px 7px; text-transform: uppercase; backdrop-filter: blur(4px);
+  }
+
+  .card-body { padding: 12px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  .card-title {
+    font-family: 'Orbitron', monospace; font-size: 0.68rem; font-weight: 700;
+    line-height: 1.5; color: var(--text); letter-spacing: 0.02em;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .grid .card:first-child .card-title { font-size: 0.88rem; -webkit-line-clamp: 2; }
+  .card-desc {
+    font-size: 0.62rem; color: var(--muted); line-height: 1.55;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .card-meta {
+    margin-top: auto; display: flex; align-items: center;
+    justify-content: space-between; padding-top: 8px; border-top: 1px solid var(--border);
+  }
+  .card-source { font-size: 0.55rem; letter-spacing: 0.15em; color: var(--accent); text-transform: uppercase; }
+  .card-time { font-size: 0.55rem; color: var(--muted); }
+
+  /* SKELETON */
+  .skeleton { background: var(--surface); border: 1px solid var(--border); border-radius: 3px; overflow: hidden; animation: skPulse 1.5s ease-in-out infinite; }
+  @keyframes skPulse { 0%,100%{opacity:0.5;} 50%{opacity:0.9;} }
+  .sk-img { aspect-ratio: 16/9; background: var(--surface2); }
+  .sk-body { padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+  .sk-line { height: 8px; background: var(--surface2); border-radius: 2px; }
+  .sk-line.w80{width:80%;} .sk-line.w60{width:60%;} .sk-line.w40{width:40%;}
+
+  /* ERROR */
+  .error-box {
+    grid-column: 1 / -1; padding: 40px; text-align: center;
+    border: 1px solid rgba(255,107,53,0.3); border-radius: 3px;
+  }
+  .error-box p { color: var(--muted); font-size: 0.75rem; margin-bottom: 12px; }
+  .error-box code { color: #ff6b35; font-size: 0.7rem; }
+
+  /* RESPONSIVE */
+  @media (max-width: 1100px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 800px) {
+    header { padding: 14px 20px; } nav { padding: 0 20px; } main { padding: 16px 20px 40px; }
+    .grid { grid-template-columns: repeat(2, 1fr); }
+    .grid .card:first-child { grid-column: 1 / 3; }
+  }
+  @media (max-width: 500px) {
+    .grid { grid-template-columns: 1fr; }
+    .grid .card:first-child { grid-column: 1; }
+  }
+</style>
+</head>
+<body>
+<div id="stars"></div>
+
+<header>
+  <div>
+    <div class="logo-text">COSMOS</div>
+    <div class="logo-sub">News Terminal</div>
+  </div>
+  <div class="header-right">
+    <span class="live-dot"></span><span class="live-label">Live</span>
+    <div id="clock">--:--:--</div>
+    <button class="refresh-btn" onclick="loadNews(currentCat)">⟳ Aggiorna</button>
+  </div>
+</header>
+
+<nav id="nav"></nav>
+
+<main>
+  <div class="grid" id="grid"></div>
+</main>
+
+<script>
+const PROXY = 'https://api.allorigins.win/get?url=';
+
+const FEEDS = {
+  all:   { label:'Tutte',    emoji:'🌌', url:'https://www.ansa.it/sito/notizie/topnews/topnews_rss.xml' },
+  tech:  { label:'Tech',     emoji:'🤖', url:'https://www.ansa.it/canale_tecnologia/notizie/tecnologia_rss.xml' },
+  sport: { label:'Sport',    emoji:'⚽', url:'https://www.ansa.it/sito/notizie/sport/sport_rss.xml' },
+  mondo: { label:'Mondo',    emoji:'🌍', url:'https://www.ansa.it/sito/notizie/mondo/mondo_rss.xml' },
+  sci:   { label:'Scienza',  emoji:'🔭', url:'https://www.ansa.it/canale_scienze_tecnologie/notizie/spazio_astronomia/spazio_astronomia_rss.xml' },
+  cult:  { label:'Cultura',  emoji:'🎬', url:'https://www.ansa.it/sito/notizie/cultura/cinema/cinema_rss.xml' },
+};
+
+let currentCat = 'all';
+
+// Clock
+function updateClock() {
+  const n = new Date();
+  document.getElementById('clock').textContent =
+    [n.getHours(),n.getMinutes(),n.getSeconds()].map(v=>String(v).padStart(2,'0')).join(':');
+}
+setInterval(updateClock, 1000); updateClock();
+
+// Stars
+(function(){
+  const c = document.getElementById('stars');
+  for(let i=0;i<120;i++){
+    const s = document.createElement('div'); s.className='star';
+    const sz = Math.random()*1.8+0.4;
+    s.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*100}%;width:${sz}px;height:${sz}px;--d:${2+Math.random()*4}s;--o:${Math.random()*0.3+0.1};animation-delay:${Math.random()*4}s`;
+    c.appendChild(s);
+  }
+})();
+
+// Tabs
+(function(){
+  const nav = document.getElementById('nav');
+  Object.entries(FEEDS).forEach(([key,f])=>{
+    const btn = document.createElement('button');
+    btn.className='tab'+(key===currentCat?' active':'');
+    btn.innerHTML=`<span>${f.emoji}</span>${f.label}`;
+    btn.onclick=()=>{
+      document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+      btn.classList.add('active'); currentCat=key; loadNews(key);
+    };
+    nav.appendChild(btn);
+  });
+})();
+
+// Time ago
+function timeAgo(d) {
+  if(!d) return '';
+  const s=(Date.now()-new Date(d))/1000;
+  if(s<60) return 'ora';
+  if(s<3600) return Math.floor(s/60)+'m fa';
+  if(s<86400) return Math.floor(s/3600)+'h fa';
+  return Math.floor(s/86400)+'g fa';
+}
+
+// Parse RSS — estrae immagine dalla description (ANSA la mette lì come <img>)
+function parseRSS(xmlStr) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(xmlStr, 'text/xml');
+  return Array.from(doc.querySelectorAll('item')).slice(0,12).map(item => {
+    // prova enclosure
+    const enc = item.querySelector('enclosure');
+    let img = enc ? enc.getAttribute('url') : null;
+
+    // prova media:content / media:thumbnail
+    if(!img) {
+      const ns = ['http://search.yahoo.com/mrss/','http://www.rssboard.org/media-rss'];
+      for(const n of ns) {
+        const el = item.getElementsByTagNameNS(n,'content')[0] || item.getElementsByTagNameNS(n,'thumbnail')[0];
+        if(el) { img = el.getAttribute('url'); break; }
+      }
+    }
+
+    // prova img dentro description
+    if(!img) {
+      const desc = item.querySelector('description')?.textContent || '';
+      const m = desc.match(/<img[^>]+src=["']([^"']+)["']/i);
+      if(m) img = m[1];
+    }
+
+    const rawDesc = item.querySelector('description')?.textContent || '';
+    const cleanDesc = rawDesc.replace(/<[^>]*>/g,'').trim().slice(0,160);
+
+    return {
+      title: item.querySelector('title')?.textContent?.trim() || 'Senza titolo',
+      description: cleanDesc,
+      link: item.querySelector('link')?.textContent?.trim() || '#',
+      pubDate: item.querySelector('pubDate')?.textContent || '',
+      img
+    };
+  });
+}
+
+// Skeletons
+function showSkeletons() {
+  document.getElementById('grid').innerHTML = Array(8).fill(0).map(()=>`
+    <div class="skeleton"><div class="sk-img"></div>
+    <div class="sk-body"><div class="sk-line w80"></div><div class="sk-line w60"></div><div class="sk-line w40"></div></div></div>
+  `).join('');
+}
+
+// Render
+function renderCards(articles, cat) {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  const feed = FEEDS[cat];
+  articles.forEach((a,i)=>{
+    const card = document.createElement('div');
+    card.className='card'; card.style.animationDelay=`${i*0.05}s`;
+    card.onclick=()=>window.open(a.link,'_blank');
+    const imgHtml = a.img
+      ? `<img class="card-img" src="${a.img}" alt="" loading="lazy" onerror="this.parentElement.innerHTML='<div class=card-placeholder>${feed.emoji}</div>'">`
+      : `<div class="card-placeholder">${feed.emoji}</div>`;
+    card.innerHTML=`
+      <div class="card-img-wrap">${imgHtml}<div class="card-badge">${feed.emoji} ${feed.label}</div></div>
+      <div class="card-body">
+        <div class="card-title">${a.title}</div>
+        ${a.description?`<div class="card-desc">${a.description}</div>`:''}
+        <div class="card-meta">
+          <span class="card-source">ANSA</span>
+          <span class="card-time">${timeAgo(a.pubDate)}</span>
+        </div>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+
+// Load
+async function loadNews(cat) {
+  showSkeletons();
+  const feed = FEEDS[cat];
+  try {
+    const res = await fetch(PROXY + encodeURIComponent(feed.url));
+    const data = await res.json();
+    if(!data.contents) throw new Error('Nessun contenuto');
+    const articles = parseRSS(data.contents);
+    if(!articles.length) throw new Error('Feed vuoto');
+    renderCards(articles, cat);
+  } catch(e) {
+    document.getElementById('grid').innerHTML=`<div class="error-box"><p>⚠ Impossibile caricare le notizie</p><code>${e.message}</code><br><br><button class="refresh-btn" onclick="loadNews('${cat}')">↺ Riprova</button></div>`;
+  }
+}
+
+loadNews(currentCat);
+</script>
+</body>
+</html>
